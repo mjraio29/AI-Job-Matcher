@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Job Matcher</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #f5f5f5; }
+        h1 { color: #2c3e50; }
+        .card { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input, button { padding: 10px; margin: 5px 0; border-radius: 4px; border: 1px solid #ddd; }
+        button { background: #3498db; color: white; border: none; cursor: pointer; }
+        button:hover { background: #2980b9; }
+        pre { background: #f8f8f8; padding: 10px; border-radius: 4px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>🤖 AI Job Matcher</h1>
+
+    <div class="card">
+        <h2>1. Search Jobs</h2>
+        <input id="keyword" placeholder="e.g. cybersecurity, python, IT" style="width:300px">
+        <button onclick="searchJobs()">Search</button>
+        <pre id="jobResults"></pre>
+    </div>
+
+    <div class="card">
+        <h2>2. Score My Resume</h2>
+        <input type="file" id="resumeScore">
+        <button onclick="scoreJobs()">Score Match</button>
+        <pre id="scoreResults"></pre>
+    </div>
+
+    <div class="card">
+        <h2>3. Generate Cover Letter</h2>
+        <input type="file" id="resumeLetter">
+        Job # <input type="number" id="jobIndex" value="0" style="width:60px">
+        <button onclick="getCoverLetter()">Generate</button>
+        <pre id="letterResult"></pre>
+    </div>
+
+<script>
+async function searchJobs() {
+    const keyword = document.getElementById("keyword").value || "python";
+    const res = await fetch(`/search-jobs?keyword=${keyword}`);
+    const data = await res.json();
+    document.getElementById("jobResults").textContent = 
+        data.jobs.map((j,i) => `[${i}] ${j.title} @ ${j.company}`).join("\n");
+}
+
+async function scoreJobs() {
+    const file = document.getElementById("resumeScore").files[0];
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/score-jobs", { method: "POST", body: form });
+    const data = await res.json();
+    document.getElementById("scoreResults").textContent = 
+        data.results.map(r => `${r.title} @ ${r.company}\n${r.analysis}`).join("\n\n---\n\n");
+}
+
+async function getCoverLetter() {
+    const file = document.getElementById("resumeLetter").files[0];
+    const jobIndex = document.getElementById("jobIndex").value;
+    const form = new FormData();
+    form.append("file", file);
+    form.append("job_index", jobIndex);
+    const res = await fetch("/cover-letter", { method: "POST", body: form });
+    const data = await res.json();
+    document.getElementById("letterResult").textContent = 
+        `${data.job} @ ${data.company}\n\n${data.letter}`;
+}
+</script>
+</body>
+</html>
